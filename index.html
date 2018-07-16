@@ -76,12 +76,29 @@
         socket.on('chat message', function (msg) {
             $('#messages').append($('<li>').text(msg));
         });
+
+        // $('#m').addEventListener('keypress', function () {
+        //     socket.emit('typing', handle.value);
+        // });
+
+        $('#m').keypress(function () {
+            socket.emit('typing', $('#handle').val());
+        });
+
+        // Listen for events
+        socket.on('typing', function (handler) {
+            $('#messages').innerHTML = '<p><em>' + handler + ' is typing a message...</em></p>';
+        });
     });
+
+
+
 </script>
 
 <body>
     <ul id="messages"></ul>
     <form action="">
+        <input id="handle" type="text" placeholder="Handle" />
         <input id="m" autocomplete="off" />
         <button>Send</button>
     </form>
