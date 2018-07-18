@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -36,17 +36,17 @@
             padding: 10px;
         }
 
-        #messages {
+        #message-container {
             list-style-type: none;
             margin: 0;
             padding: 0;
         }
 
-        #messages li {
+        #message-container li {
             padding: 5px 10px;
         }
 
-        #messages li:nth-child(odd) {
+        #message-container li:nth-child(odd) {
             background: #eee;
         }
     </style>
@@ -54,53 +54,57 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-<!-- <script>
-    $(function () {
-        var socket = io();
-        $('form').submit(function () {
-            socket.emit('chat message', $('#m').val());
-            $('#m').val('');
-            return false;
-        });
-    });
-</script> -->
-
 <script>
-    $(function () {
-        var socket = io();
-        $('form').submit(function () {
-            socket.emit('chat message', $('#m').val());
-            $('#m').val('');
-            return false;
-        });
-        socket.on('chat message', function (msg) {
-            $('#messages').append($('<li>').text(msg));
-        });
-
-        // $('#m').addEventListener('keypress', function () {
-        //     socket.emit('typing', handle.value);
-        // });
-
-        $('#m').keypress(function () {
-            socket.emit('typing', $('#handle').val());
-        });
-
-        // Listen for events
-        socket.on('typing', function (handler) {
-            $('#messages').innerHTML = '<p><em>' + handler + ' is typing a message...</em></p>';
-        });
+    var socket = io();
+    function setUsername() {
+        socket.emit('setUsername', document.getElementById('name').value);
+    };
+    var user;
+    socket.on('userExists', function (data) {
+        document.getElementById('error-container').innerHTML = data;
     });
+    socket.on('userSet', function (data) {
+        user = data.username;
+        document.body.innerHTML = '<ul id = "message-container" ></ul ><ul id= "whoIsTyping"></ul>\
+            <form action=""><input type = "text" id = "message" onkeypress="userTyping()">\
+            <button type = "button" name = "button" onclick = "sendMessage()">Send</button> </form>';
+    });
+    function sendMessage() {
+        var msg = document.getElementById('message').value;
+        document.getElementById('message').value = '';
+        if (msg) {
+            socket.emit('msg', { message: msg, user: user });
+        }
+    }
+    socket.on('newmsg', function (data) {
+        const parent = document.getElementById("whoIsTyping");
+        parent.innerHTML = '';
+        if (user) {
+            $('#message-container').append($('<li><b>' + data.user + '</b>: ' + data.message + '</li>'));
+        }
+    })
 
+    function userTyping() {
+        socket.emit('typing', { user: user });
+        const parent = document.getElementById("whoIsTyping");
+        parent.innerHTML = '';
+    }
 
-
+    // Listen for events
+    socket.on('typing', function (data) {
+        const parent = document.getElementById("whoIsTyping");
+        parent.innerHTML = '';
+        $('#whoIsTyping').append($('<p id= i><em>' + data.user + ' is typing a message...</em></p>'));
+    });
 </script>
 
 <body>
-    <ul id="messages"></ul>
+    <div id="error-container"></div>
     <form action="">
-        <input id="handle" type="text" placeholder="Handle" />
-        <input id="m" autocomplete="off" />
-        <button>Send</button>
+        <input id="name" type="text" name="name" value="" placeholder="Enter your name!">
+        <button type="button" name="button" onclick="setUsername()">
+            Let me chat!
+        </button>
     </form>
 </body>
 
